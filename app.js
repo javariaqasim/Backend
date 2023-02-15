@@ -204,6 +204,69 @@ app.post('/products/:id/remove-from-favorite', (req, res) => {
 
 
 
+const cardSchema = new mongoose.Schema({
+  title: String,
+  price: Number,
+  description: String,
+  imageUrl: String,
+  category:  String,
+});
+
+const Card = mongoose.model('Card', cardSchema);
+
+
+app.post('/api/cards', (req, res) => {
+  const card = new Card({
+    title: req.body.title,
+    price: req.body.price,
+    description: req.body.description,
+    imageUrl: req.body.imageUrl,
+    category: req.body.category,
+    
+  });
+
+  card.save((error) => {
+    if (error) {
+      res.status(500).send(error);
+    } else {
+      res.send(card);
+    }
+  });
+});
+
+
+app.get('/api/cards', (req, res) => {
+  Card.find((error, cards) => {
+    if (error) {
+      res.status(500).send(error);
+    } else {
+      res.send(cards);
+    }
+  });
+});
+
+app.get('/api/cards/:id', (req, res) => {
+  Card.findById(req.params.id, (error, card) => {
+    if (error) {
+      res.status(500).send(error);
+    } else {
+      res.send(card);
+    }
+  });
+});
+
+
+app.get('/api/cards/:category', (req, res) => {
+  const category = req.params.category;
+
+  Card.find({ category }, (error, cards) => {
+    if (error) {
+      res.status(500).send(error);
+    } else {
+      res.send(cards);
+    }
+  });
+})
 
 
 
