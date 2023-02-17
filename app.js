@@ -135,73 +135,6 @@ app.get("/search", (req, res) => {
 });
 
 
-// Product schema
-const productSchema = new mongoose.Schema({
-  name: String,
-  price: Number,
-  image: String,
-  isInCart: { type: Boolean, default: false },
-  isFavorite: { type: Boolean, default: false }
-});
-
-const Product = mongoose.model('Product', productSchema);
-
-// API routes
-app.get('/products', (req, res) => {
-  Product.find({}, (err, products) => {
-    if (err) return res.status(500).send(err);
-    res.send(products);
-  });
-});
-
-app.post('/products/:id/add-to-cart', (req, res) => {
-  Product.findByIdAndUpdate(
-    req.params.id,
-    { isInCart: true },
-    { new: true },
-    (err, product) => {
-      if (err) return res.status(500).send(err);
-      res.send(product);
-    }
-  );
-});
-
-app.post('/products/:id/remove-from-cart', (req, res) => {
-  Product.findByIdAndUpdate(
-    req.params.id,
-    { isInCart: false },
-    { new: true },
-    (err, product) => {
-      if (err) return res.status(500).send(err);
-      res.send(product);
-    }
-  );
-});
-
-app.post('/products/:id/add-to-favorite', (req, res) => {
-  Product.findByIdAndUpdate(
-    req.params.id,
-    { isFavorite: true },
-    { new: true },
-    (err, product) => {
-      if (err) return res.status(500).send(err);
-      res.send(product);
-    }
-  );
-});
-
-app.post('/products/:id/remove-from-favorite', (req, res) => {
-  Product.findByIdAndUpdate(
-    req.params.id,
-    { isFavorite: false },
-    { new: true },
-    (err, product) => {
-      if (err) return res.status(500).send(err);
-      res.send(product);
-    }
-  );
-});
-
 
 
 const cardSchema = new mongoose.Schema({
@@ -268,8 +201,71 @@ app.get('/api/cards/:category', (req, res) => {
   });
 })
 
+// delete a cart item
+app.delete('/api/cards/:id', async (req, res) => {
+  try {
+    const CardItem = await CardItem.findById(req.params.id);
+    await CardItem.remove();
+    res.json({ message: 'Card item deleted' });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
 
 
+
+const wishlistItemSchema = new mongoose.Schema({
+  productId: String,
+});
+
+const WishlistItem = mongoose.model('WishlistItem', wishlistItemSchema);
+
+// add a wishlist item
+app.post('/wishlist', async (req, res) => {
+  const wishlistItem = new WishlistItem({
+    productId: req.body.productId,
+  });
+
+  try {
+    const newWishlistItem = await wishlistItem.save();
+    res.status(201).json(newWishlistItem);
+  } catch (error) {
+    res.status(400).json({ message: error.message });
+  }
+});
+
+// get all wishlist items
+app.get('/wishlist', async (req, res) => {
+  try {
+    const wishlistItems = await WishlistItem.find();
+    res.json(wishlistItems);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+
+
+
+const Order = mongoose.model('Order', {
+  customerName: String,
+  productName: String,
+  price: Number,
+  address: String, 
+  quantity: Number,
+})
+
+app.get('/api/orders', async (req, res) => {
+  const orders = await Order.find();
+  res.send(orders);
+});
+
+app.post('/api/orders', async (req, res) => {
+  const { customerName, productName, price,address,quantity } = req.body;
+  const order = new Order({ customerName, productName, price, address , quantity});
+  await order.save();
+  res.send(order);
+});
 
 app.listen(PORT, () =>
   console.log(`server  running on http://localhost:${PORT}`)
